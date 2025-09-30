@@ -1,0 +1,10 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: payment-service
+  data:
+    mongodb:
+      uri: mongodb://payments:paymentsroot@localhost:27017/payments_db?authSource=admin
+
