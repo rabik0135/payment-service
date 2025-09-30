@@ -7,4 +7,3 @@ spring:
   data:
     mongodb:
       uri: mongodb://payments:paymentsroot@localhost:27017/payments_db?authSource=admin
-
