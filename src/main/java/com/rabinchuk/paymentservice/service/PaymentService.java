@@ -2,7 +2,7 @@ package com.rabinchuk.paymentservice.service;
 
 import com.rabinchuk.paymentservice.dto.PaymentRequestDto;
 import com.rabinchuk.paymentservice.dto.PaymentResponseDto;
-import com.rabinchuk.paymentservice.dto.TotalSumDto;
+import com.rabinchuk.paymentservice.dto.TotalAmountDto;
 import com.rabinchuk.paymentservice.model.PaymentStatus;
 
 import java.time.LocalDateTime;
@@ -16,8 +16,8 @@ public interface PaymentService {
 
     List<PaymentResponseDto> getPaymentsByUserId(Long userId);
 
-    List<PaymentResponseDto> getPaymentsByStatuses(List<PaymentStatus> statuses);
+    List<PaymentResponseDto> getPaymentsByStatus(PaymentStatus paymentStatus);
 
-    TotalSumDto getTotalSumOfPaymentsForDatePeriod(LocalDateTime startDate, LocalDateTime endDate);
+    TotalAmountDto getTotalSumOfPaymentsForDatePeriod(LocalDateTime startDate, LocalDateTime endDate);
 
 }

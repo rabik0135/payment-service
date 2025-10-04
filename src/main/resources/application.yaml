@@ -7,3 +7,19 @@ spring:
   data:
     mongodb:
       uri: mongodb://payments:paymentsroot@localhost:27017/payments_db?authSource=admin
+  kafka:
+    bootstrap-servers: localhost:9094
+    consumer:
+      group-id: payment-service-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring:
+          json:
+            trusted:
+              packages: "*"
+            type:
+              mapping: "com.rabinchuk.orderservice.dto.OrderCreatedEvent:com.rabinchuk.paymentservice.dto.OrderCreatedEvent"
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer

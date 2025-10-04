@@ -2,7 +2,7 @@ package com.rabinchuk.paymentservice.dto;
 
 import java.math.BigDecimal;
 
-public record TotalSumDto(
-        BigDecimal totalSum
+public record TotalAmountDto(
+        BigDecimal totalAmount
 ) {
 }

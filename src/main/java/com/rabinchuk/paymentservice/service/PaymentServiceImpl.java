@@ -1,14 +1,16 @@
 package com.rabinchuk.paymentservice.service;
 
 import com.rabinchuk.paymentservice.client.ExternalApiClient;
+import com.rabinchuk.paymentservice.dto.PaymentCreatedEvent;
 import com.rabinchuk.paymentservice.dto.PaymentRequestDto;
 import com.rabinchuk.paymentservice.dto.PaymentResponseDto;
-import com.rabinchuk.paymentservice.dto.TotalSumDto;
+import com.rabinchuk.paymentservice.dto.TotalAmountDto;
 import com.rabinchuk.paymentservice.mapper.PaymentMapper;
 import com.rabinchuk.paymentservice.model.Payment;
 import com.rabinchuk.paymentservice.model.PaymentStatus;
 import com.rabinchuk.paymentservice.repository.PaymentRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -22,6 +24,7 @@ public class PaymentServiceImpl implements PaymentService {
     private final PaymentRepository paymentRepository;
     private final PaymentMapper paymentMapper;
     private final ExternalApiClient externalApiClient;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
 
     @Override
     public PaymentResponseDto createPayment(PaymentRequestDto paymentRequestDto) {
@@ -37,6 +40,11 @@ public class PaymentServiceImpl implements PaymentService {
 
         Payment createdPayment = paymentRepository.save(payment);
 
+        PaymentCreatedEvent paymentCreatedEvent = PaymentCreatedEvent.builder()
+                .orderId(paymentRequestDto.orderId())
+                .status(status)
+                .build();
+        kafkaTemplate.send("payment-created-topic", paymentCreatedEvent);
         return paymentMapper.toDto(createdPayment);
     }
 
@@ -55,19 +63,19 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
-    public List<PaymentResponseDto> getPaymentsByStatuses(List<PaymentStatus> statuses) {
-        return paymentRepository.findAllByStatusIn(statuses).stream()
+    public List<PaymentResponseDto> getPaymentsByStatus(PaymentStatus paymentStatus) {
+        return paymentRepository.findAllByStatus(paymentStatus).stream()
                 .map(paymentMapper::toDto)
                 .toList();
     }
 
     @Override
-    public TotalSumDto getTotalSumOfPaymentsForDatePeriod(LocalDateTime startDate, LocalDateTime endDate) {
-        TotalSumDto totalSumDto = paymentRepository.findTotalSumOfPaymentsForDatePeriod(startDate, endDate);
-        if (totalSumDto == null || totalSumDto.totalSum() == null) {
-            return new TotalSumDto(BigDecimal.ZERO);
+    public TotalAmountDto getTotalSumOfPaymentsForDatePeriod(LocalDateTime startDate, LocalDateTime endDate) {
+        TotalAmountDto totalAmountDto = paymentRepository.findTotalSumOfPaymentsForDatePeriod(startDate, endDate);
+        if (totalAmountDto == null || totalAmountDto.totalAmount() == null) {
+            return new TotalAmountDto(BigDecimal.ZERO);
         }
-        return totalSumDto;
+        return totalAmountDto;
     }
 
     private PaymentStatus getPaymentStatus(){

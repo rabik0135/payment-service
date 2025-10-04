@@ -1,6 +1,6 @@
 package com.rabinchuk.paymentservice.repository;
 
-import com.rabinchuk.paymentservice.dto.TotalSumDto;
+import com.rabinchuk.paymentservice.dto.TotalAmountDto;
 import com.rabinchuk.paymentservice.model.Payment;
 import com.rabinchuk.paymentservice.model.PaymentStatus;
 import org.springframework.data.mongodb.repository.Aggregation;
@@ -17,12 +17,12 @@ public interface PaymentRepository extends MongoRepository<Payment, String> {
 
     List<Payment> findAllByUserId(Long userId);
 
-    List<Payment> findAllByStatusIn(List<PaymentStatus> statuses);
+    List<Payment> findAllByStatus(PaymentStatus status);
 
     @Aggregation( pipeline = {
             "{ 'match': { 'timestamp': { '$gte': ?0, '$lte': ?1 }, 'status': 'SUCCESS'} }",
             "{ 'group': { '_id': null, 'totalSum': { '$sum': '$payment_Amount' } } }"
     })
-    TotalSumDto findTotalSumOfPaymentsForDatePeriod(LocalDateTime startDate, LocalDateTime endDate);
+    TotalAmountDto findTotalSumOfPaymentsForDatePeriod(LocalDateTime startDate, LocalDateTime endDate);
 
 }
