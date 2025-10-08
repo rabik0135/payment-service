@@ -6,7 +6,14 @@ spring:
     name: payment-service
   data:
     mongodb:
-      uri: mongodb://payments:paymentsroot@localhost:27017/payments_db?authSource=admin
+      uri: mongodb://payments:paymentsroot@localhost:27017/payments_db?authSource=admin&replicaSet=rs0
+   #   host: ${MONGO_USER}
+   #   port: ${MONGO_PASSWORD}
+   #   database: payments_db
+   #   username:
+   #   password:
+   #   authentication-database: admin
+  #  replica-set-name: rs0
   kafka:
     bootstrap-servers: localhost:9094
     consumer:
@@ -17,9 +24,20 @@ spring:
         spring:
           json:
             trusted:
-              packages: "*"
+              packages: "com.rabinchuk.paymentservice.dto,com.rabinchuk.orderservice.dto"
+            use:
+              type:
+                headers: true
             type:
               mapping: "com.rabinchuk.orderservice.dto.OrderCreatedEvent:com.rabinchuk.paymentservice.dto.OrderCreatedEvent"
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring:
+            use:
+              type:
+                headers: true
+client:
+  random-number-api:
+    url: http://www.randomnumberapi.com

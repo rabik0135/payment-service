@@ -1,17 +1,22 @@
 package com.rabinchuk.paymentservice.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabinchuk.paymentservice.client.ExternalApiClient;
+import com.rabinchuk.paymentservice.dto.OrderCreatedEvent;
 import com.rabinchuk.paymentservice.dto.PaymentCreatedEvent;
-import com.rabinchuk.paymentservice.dto.PaymentRequestDto;
 import com.rabinchuk.paymentservice.dto.PaymentResponseDto;
 import com.rabinchuk.paymentservice.dto.TotalAmountDto;
 import com.rabinchuk.paymentservice.mapper.PaymentMapper;
+import com.rabinchuk.paymentservice.outbox.EventStatus;
+import com.rabinchuk.paymentservice.outbox.OutboxPayments;
 import com.rabinchuk.paymentservice.model.Payment;
 import com.rabinchuk.paymentservice.model.PaymentStatus;
+import com.rabinchuk.paymentservice.outbox.OutboxPaymentsRepository;
 import com.rabinchuk.paymentservice.repository.PaymentRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.kafka.core.KafkaTemplate;
+import lombok.SneakyThrows;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -22,51 +27,36 @@ import java.util.List;
 public class PaymentServiceImpl implements PaymentService {
 
     private final PaymentRepository paymentRepository;
+    private final OutboxPaymentsRepository outboxPaymentsRepository;
     private final PaymentMapper paymentMapper;
     private final ExternalApiClient externalApiClient;
-    private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final ObjectMapper objectMapper;
 
     @Override
-    public PaymentResponseDto createPayment(PaymentRequestDto paymentRequestDto) {
+    @Transactional
+    @SneakyThrows
+    public void createPayment(OrderCreatedEvent orderCreatedEvent) {
         PaymentStatus status = getPaymentStatus();
 
-        Payment payment = Payment.builder()
-                .orderId(paymentRequestDto.orderId())
-                .userId(paymentRequestDto.userId())
-                .status(status)
-                .timestamp(LocalDateTime.now())
-                .paymentAmount(paymentRequestDto.paymentAmount())
-                .build();
+        Payment payment = paymentMapper.toEntity(orderCreatedEvent);
+        payment.setStatus(status);
+        payment.setTimestamp(LocalDateTime.now());
 
         Payment createdPayment = paymentRepository.save(payment);
 
         PaymentCreatedEvent paymentCreatedEvent = PaymentCreatedEvent.builder()
-                .orderId(paymentRequestDto.orderId())
+                .orderId(orderCreatedEvent.orderId())
                 .status(status)
                 .build();
-        kafkaTemplate.send("payment-created-topic", paymentCreatedEvent);
-        return paymentMapper.toDto(createdPayment);
-    }
 
-    @Override
-    public List<PaymentResponseDto> getPaymentsByOrderId(Long orderId) {
-        return paymentRepository.findAllByOrderId(orderId).stream()
-                .map(paymentMapper::toDto)
-                .toList();
-    }
-
-    @Override
-    public List<PaymentResponseDto> getPaymentsByUserId(Long userId) {
-        return paymentRepository.findAllByUserId(userId).stream()
-                .map(paymentMapper::toDto)
-                .toList();
-    }
-
-    @Override
-    public List<PaymentResponseDto> getPaymentsByStatus(PaymentStatus paymentStatus) {
-        return paymentRepository.findAllByStatus(paymentStatus).stream()
-                .map(paymentMapper::toDto)
-                .toList();
+        OutboxPayments event = OutboxPayments.builder()
+                .paymentId(createdPayment.getId())
+                .topic("payment-created-topic")
+                .payload(objectMapper.writeValueAsString(paymentCreatedEvent))
+                .status(EventStatus.PENDING)
+                .createdAt(LocalDateTime.now())
+                .build();
+        outboxPaymentsRepository.save(event);
     }
 
     @Override
@@ -76,6 +66,14 @@ public class PaymentServiceImpl implements PaymentService {
             return new TotalAmountDto(BigDecimal.ZERO);
         }
         return totalAmountDto;
+    }
+
+    @Override
+    public List<PaymentResponseDto> getPayments(Long orderId, Long userId, PaymentStatus status) {
+        List<Payment> payments = paymentRepository.findPayments(orderId, userId, status);
+        return payments.stream()
+                .map(paymentMapper::toDto)
+                .toList();
     }
 
     private PaymentStatus getPaymentStatus(){

@@ -6,15 +6,32 @@ services:
   mongo:
     image: mongo:8.0
     container_name: mongo
+    restart: always
     ports:
       - "27017:27017"
     volumes:
       - mongo_data:/data/db
+      - ./mongo-init/mongo.key:/etc/mongo/mongo.key:ro
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+    command: [ "--replSet", "rs0", "--bind_ip_all", "--port", "27017", "--auth", "--keyFile", "/etc/mongo/mongo.key" ]
     networks:
-      microservices-network:
+      - microservices-network
+
+  mongo-init-replica:
+    image: mongo:8.0
+    depends_on:
+      - mongo
+    environment:
+        MONGO_USER: ${MONGO_USER}
+        MONGO_PASSWORD: ${MONGO_PASSWORD}
+    volumes:
+      - ./mongo-init/mongo-init.sh:/scripts/mongo-init.sh:ro
+      - ./mongo-init/mongo.key:/etc/mongo/mongo.key:ro
+    entrypoint: [ "/bin/bash", "/scripts/mongo-init.sh" ]
+    networks:
+      - microservices-network
 
   kafka:
     image: apache/kafka:3.9.1

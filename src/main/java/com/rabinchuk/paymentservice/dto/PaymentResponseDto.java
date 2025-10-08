@@ -8,7 +8,6 @@ import java.time.LocalDateTime;
 
 @Builder
 public record PaymentResponseDto(
-
         String id,
 
         Long orderId,

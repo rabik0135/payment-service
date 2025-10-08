@@ -1,7 +1,6 @@
 package com.rabinchuk.paymentservice.service;
 
 import com.rabinchuk.paymentservice.dto.OrderCreatedEvent;
-import com.rabinchuk.paymentservice.dto.PaymentRequestDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -18,15 +17,11 @@ public class KafkaConsumerService {
     public void handleOrderCreatedEvent(OrderCreatedEvent orderCreatedEvent) {
         log.info("Received OrderCreatedEvent {}", orderCreatedEvent);
         try {
-            PaymentRequestDto paymentRequestDto = PaymentRequestDto.builder()
-                    .orderId(orderCreatedEvent.orderId())
-                    .userId(orderCreatedEvent.userId())
-                    .paymentAmount(orderCreatedEvent.paymentAmount())
-                    .build();
-            paymentService.createPayment(paymentRequestDto);
+            paymentService.createPayment(orderCreatedEvent);
             log.info("Payment request has been created for order {}", orderCreatedEvent.orderId());
         }  catch (Exception e) {
             log.error("Exception occurred while processing OrderCreatedEvent {}", orderCreatedEvent, e);
         }
     }
+
 }
