@@ -7,13 +7,6 @@ spring:
   data:
     mongodb:
       uri: mongodb://payments:paymentsroot@localhost:27017/payments_db?authSource=admin&replicaSet=rs0
-   #   host: ${MONGO_USER}
-   #   port: ${MONGO_PASSWORD}
-   #   database: payments_db
-   #   username:
-   #   password:
-   #   authentication-database: admin
-  #  replica-set-name: rs0
   kafka:
     bootstrap-servers: localhost:9094
     consumer:

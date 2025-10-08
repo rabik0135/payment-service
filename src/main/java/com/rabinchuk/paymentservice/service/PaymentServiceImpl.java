@@ -6,8 +6,8 @@ import com.rabinchuk.paymentservice.dto.OrderCreatedEvent;
 import com.rabinchuk.paymentservice.dto.PaymentCreatedEvent;
 import com.rabinchuk.paymentservice.dto.PaymentResponseDto;
 import com.rabinchuk.paymentservice.dto.TotalAmountDto;
+import com.rabinchuk.paymentservice.mapper.OutboxPaymentsMapper;
 import com.rabinchuk.paymentservice.mapper.PaymentMapper;
-import com.rabinchuk.paymentservice.outbox.EventStatus;
 import com.rabinchuk.paymentservice.outbox.OutboxPayments;
 import com.rabinchuk.paymentservice.model.Payment;
 import com.rabinchuk.paymentservice.model.PaymentStatus;
@@ -29,6 +29,7 @@ public class PaymentServiceImpl implements PaymentService {
     private final PaymentRepository paymentRepository;
     private final OutboxPaymentsRepository outboxPaymentsRepository;
     private final PaymentMapper paymentMapper;
+    private final OutboxPaymentsMapper outboxPaymentsMapper;
     private final ExternalApiClient externalApiClient;
     private final ObjectMapper objectMapper;
 
@@ -40,7 +41,6 @@ public class PaymentServiceImpl implements PaymentService {
 
         Payment payment = paymentMapper.toEntity(orderCreatedEvent);
         payment.setStatus(status);
-        payment.setTimestamp(LocalDateTime.now());
 
         Payment createdPayment = paymentRepository.save(payment);
 
@@ -49,13 +49,7 @@ public class PaymentServiceImpl implements PaymentService {
                 .status(status)
                 .build();
 
-        OutboxPayments event = OutboxPayments.builder()
-                .paymentId(createdPayment.getId())
-                .topic("payment-created-topic")
-                .payload(objectMapper.writeValueAsString(paymentCreatedEvent))
-                .status(EventStatus.PENDING)
-                .createdAt(LocalDateTime.now())
-                .build();
+        OutboxPayments event = outboxPaymentsMapper.toEntity(createdPayment, paymentCreatedEvent, objectMapper);
         outboxPaymentsRepository.save(event);
     }
 

@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -40,6 +41,7 @@ public class Payment {
     private PaymentStatus status;
 
     @Indexed
+    @CreatedDate
     private LocalDateTime timestamp;
 
     @Field(value = "payment_amount", targetType = FieldType.DECIMAL128)
