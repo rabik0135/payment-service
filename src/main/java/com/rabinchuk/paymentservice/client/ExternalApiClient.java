@@ -10,4 +10,5 @@ public interface ExternalApiClient {
 
     @GetMapping("/api/v1.0/random?min=1&max=100")
     List<Integer> getRandomNumber();
+
 }
