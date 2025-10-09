@@ -68,7 +68,7 @@
         <dependency>
             <groupId>org.liquibase.ext</groupId>
             <artifactId>liquibase-mongodb</artifactId>
-            <version>4.32.0</version>
+            <version>5.0.0</version>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>

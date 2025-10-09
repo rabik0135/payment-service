@@ -3,6 +3,35 @@ networks:
     external: true
 
 services:
+  payment-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: payment-service:latest
+    container_name: payment-service
+    ports:
+      - "8084:8084"
+    depends_on:
+      mongo:
+        condition: service_started
+      kafka:
+        condition: service_started
+    environment:
+      SPRING_DATA_MONGODB_URI: "mongodb://${MONGO_USER}:${MONGO_PASSWORD}@mongo:27017/payments_db?authSource=admin&replicaSet=rs0"
+      CLIENT_RANDOM-NUMBER-API_URL: "http://www.randomnumberapi.com"
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+      SPRING_DATA_MONGODB_USERNAME: ${MONGO_USER}
+      SPRING_DATA_MONGODB_PASSWORD: ${MONGO_PASSWORD}
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health
+      MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED: true
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://payment-service:8084/actuator/health" ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - microservices-network
   mongo:
     image: mongo:8.0
     container_name: mongo

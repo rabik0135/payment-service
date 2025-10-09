@@ -11,7 +11,7 @@ mongosh --host mongo:27017 -u "$MONGO_USER" -p "$MONGO_PASSWORD" --authenticatio
 rs.initiate({
   _id: "rs0",
   members: [
-    { _id: 0, host: "localhost:27017" }
+    { _id: 0, host: "mongo:27017" }
   ]
 })
 EOF

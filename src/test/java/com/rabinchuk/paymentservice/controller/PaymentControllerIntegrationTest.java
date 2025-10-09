@@ -11,7 +11,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.ResultActions;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -67,7 +66,7 @@ public class PaymentControllerIntegrationTest extends AbstractIntegrationTest {
                 Payment.builder().status(PaymentStatus.SUCCESS).paymentAmount(new BigDecimal("150.50")).timestamp(startDate.plusDays(5)).build(),
                 Payment.builder().status(PaymentStatus.SUCCESS).paymentAmount(new BigDecimal("50.00")).timestamp(startDate.plusDays(10)).build(),
                 Payment.builder().status(PaymentStatus.FAILED).paymentAmount(new BigDecimal("100.00")).timestamp(startDate.plusDays(11)).build(),
-                Payment.builder().status(PaymentStatus.SUCCESS).paymentAmount(new BigDecimal("200.00")).timestamp(startDate.minusDays(1)).build() // Вне периода
+                Payment.builder().status(PaymentStatus.SUCCESS).paymentAmount(new BigDecimal("200.00")).timestamp(startDate.minusDays(1)).build()
         ));
 
         mockMvc.perform(get("/api/payments/total-amount")

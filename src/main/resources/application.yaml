@@ -7,6 +7,10 @@ spring:
   data:
     mongodb:
       uri: mongodb://payments:paymentsroot@localhost:27017/payments_db?authSource=admin&replicaSet=rs0
+      database: payments_db
+  liquibase:
+    enabled: true
+    change-log: db/changelog/db.changelog-master.xml
   kafka:
     bootstrap-servers: localhost:9094
     consumer:

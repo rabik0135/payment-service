@@ -41,7 +41,6 @@ public class Payment {
     private PaymentStatus status;
 
     @Indexed
-    @CreatedDate
     private LocalDateTime timestamp;
 
     @Field(value = "payment_amount", targetType = FieldType.DECIMAL128)

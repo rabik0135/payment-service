@@ -35,6 +35,5 @@ public class OutboxPayments {
 
     private EventStatus status;
 
-    @CreatedDate
     private LocalDateTime createdAt;
 }

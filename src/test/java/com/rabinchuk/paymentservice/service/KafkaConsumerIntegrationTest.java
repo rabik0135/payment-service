@@ -40,7 +40,7 @@ public class KafkaConsumerIntegrationTest extends AbstractIntegrationTest {
         wireMock.stubFor(get(urlPathEqualTo("/api/v1.0/random"))
                 .willReturn(aResponse()
                         .withHeader("Content-Type", "application/json")
-                        .withBody("[10]") // Четное число -> SUCCESS
+                        .withBody("[10]")
                         .withStatus(200)));
 
         OrderCreatedEvent event = new OrderCreatedEvent(1L, 101L, new BigDecimal("199.99"));

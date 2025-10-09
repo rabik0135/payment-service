@@ -9,10 +9,12 @@ import org.mapstruct.Context;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
+import java.time.LocalDateTime;
+
 @Mapper(componentModel = "spring")
 public interface OutboxPaymentsMapper {
 
-    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "createdAt", expression = "java(getCurrentDateTime())")
     @Mapping(target = "paymentId", source = "createdPayment.id")
     @Mapping(target = "topic", constant = "payment-created-topic")
     @Mapping(target = "status", constant = "PENDING")
@@ -23,4 +25,8 @@ public interface OutboxPaymentsMapper {
     OutboxPayments toEntity(Payment createdPayment,
                             PaymentCreatedEvent paymentCreatedEvent,
                             @Context ObjectMapper objectMapper) throws JsonProcessingException;
+
+    default LocalDateTime getCurrentDateTime() {
+        return LocalDateTime.now();
+    }
 }
