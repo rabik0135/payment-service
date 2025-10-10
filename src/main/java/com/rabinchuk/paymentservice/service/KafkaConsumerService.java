@@ -19,7 +19,7 @@ public class KafkaConsumerService {
         try {
             paymentService.createPayment(orderCreatedEvent);
             log.info("Payment request has been created for order {}", orderCreatedEvent.orderId());
-        }  catch (Exception e) {
+        } catch (Exception e) {
             log.error("Exception occurred while processing OrderCreatedEvent {}", orderCreatedEvent, e);
         }
     }

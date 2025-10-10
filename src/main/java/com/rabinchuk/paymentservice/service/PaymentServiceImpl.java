@@ -6,11 +6,12 @@ import com.rabinchuk.paymentservice.dto.OrderCreatedEvent;
 import com.rabinchuk.paymentservice.dto.PaymentCreatedEvent;
 import com.rabinchuk.paymentservice.dto.PaymentResponseDto;
 import com.rabinchuk.paymentservice.dto.TotalAmountDto;
+import com.rabinchuk.paymentservice.mapper.EventMapper;
 import com.rabinchuk.paymentservice.mapper.OutboxPaymentsMapper;
 import com.rabinchuk.paymentservice.mapper.PaymentMapper;
-import com.rabinchuk.paymentservice.outbox.OutboxPayments;
 import com.rabinchuk.paymentservice.model.Payment;
 import com.rabinchuk.paymentservice.model.PaymentStatus;
+import com.rabinchuk.paymentservice.outbox.OutboxPayments;
 import com.rabinchuk.paymentservice.outbox.OutboxPaymentsRepository;
 import com.rabinchuk.paymentservice.repository.PaymentRepository;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,7 @@ public class PaymentServiceImpl implements PaymentService {
     private final OutboxPaymentsRepository outboxPaymentsRepository;
     private final PaymentMapper paymentMapper;
     private final OutboxPaymentsMapper outboxPaymentsMapper;
+    private final EventMapper eventMapper;
     private final ExternalApiClient externalApiClient;
     private final ObjectMapper objectMapper;
 
@@ -38,17 +40,11 @@ public class PaymentServiceImpl implements PaymentService {
     @SneakyThrows
     public void createPayment(OrderCreatedEvent orderCreatedEvent) {
         PaymentStatus status = getPaymentStatus();
-
         Payment payment = paymentMapper.toEntity(orderCreatedEvent);
         payment.setStatus(status);
-
         Payment createdPayment = paymentRepository.save(payment);
 
-        PaymentCreatedEvent paymentCreatedEvent = PaymentCreatedEvent.builder()
-                .orderId(orderCreatedEvent.orderId())
-                .status(status)
-                .build();
-
+        PaymentCreatedEvent paymentCreatedEvent = eventMapper.toPaymentCreatedEvent(orderCreatedEvent, status);
         OutboxPayments event = outboxPaymentsMapper.toEntity(createdPayment, paymentCreatedEvent, objectMapper);
         outboxPaymentsRepository.save(event);
     }
@@ -70,7 +66,7 @@ public class PaymentServiceImpl implements PaymentService {
                 .toList();
     }
 
-    private PaymentStatus getPaymentStatus(){
+    private PaymentStatus getPaymentStatus() {
         int number = externalApiClient.getRandomNumber().getFirst();
         return (number % 2 == 0) ? PaymentStatus.SUCCESS : PaymentStatus.FAILED;
     }

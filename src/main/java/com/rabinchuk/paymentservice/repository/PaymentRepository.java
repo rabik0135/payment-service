@@ -9,9 +9,9 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDateTime;
 
 @Repository
-public interface PaymentRepository extends MongoRepository<Payment, String>, FilterPaymentRepository{
+public interface PaymentRepository extends MongoRepository<Payment, String>, FilterPaymentRepository {
 
-    @Aggregation( pipeline = {
+    @Aggregation(pipeline = {
             "{ '$match': { 'timestamp': { '$gte': ?0, '$lte': ?1 }, 'status': 'SUCCESS'} }",
             "{ '$group': { '_id': null, 'totalAmount': { '$sum': '$payment_amount' } } }"
     })

@@ -32,9 +32,9 @@ spring:
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
       properties:
         spring:
-            use:
-              type:
-                headers: true
+          use:
+            type:
+              headers: true
 client:
   random-number-api:
     url: http://www.randomnumberapi.com

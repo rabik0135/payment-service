@@ -33,7 +33,7 @@ public class FilterPaymentRepositoryImpl implements FilterPaymentRepository {
         }
 
         if (!criteria.isEmpty()) {
-            query.addCriteria(new  Criteria().andOperator(criteria.toArray(new Criteria[0])));
+            query.addCriteria(new Criteria().andOperator(criteria.toArray(new Criteria[0])));
         }
 
         return mongoTemplate.find(query, Payment.class);

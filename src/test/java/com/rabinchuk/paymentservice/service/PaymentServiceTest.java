@@ -7,6 +7,7 @@ import com.rabinchuk.paymentservice.dto.OrderCreatedEvent;
 import com.rabinchuk.paymentservice.dto.PaymentCreatedEvent;
 import com.rabinchuk.paymentservice.dto.PaymentResponseDto;
 import com.rabinchuk.paymentservice.dto.TotalAmountDto;
+import com.rabinchuk.paymentservice.mapper.EventMapper;
 import com.rabinchuk.paymentservice.mapper.OutboxPaymentsMapper;
 import com.rabinchuk.paymentservice.mapper.PaymentMapper;
 import com.rabinchuk.paymentservice.model.Payment;
@@ -26,11 +27,11 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(MockitoExtension.class)
 public class PaymentServiceTest {
@@ -52,6 +53,9 @@ public class PaymentServiceTest {
 
     @Mock
     private ObjectMapper objectMapper;
+
+    @Mock
+    private EventMapper eventMapper;
 
     @InjectMocks
     private PaymentServiceImpl paymentService;
@@ -81,6 +85,10 @@ public class PaymentServiceTest {
         when(paymentMapper.toEntity(any(OrderCreatedEvent.class))).thenReturn(payment);
         when(paymentRepository.save(any(Payment.class))).thenReturn(payment);
 
+        PaymentCreatedEvent paymentCreatedEvent = new PaymentCreatedEvent(1L, PaymentStatus.SUCCESS);
+
+        when(eventMapper.toPaymentCreatedEvent(any(OrderCreatedEvent.class), any(PaymentStatus.class))).thenReturn(paymentCreatedEvent);
+
         OutboxPayments outboxEvent = OutboxPayments.builder()
                 .id("event")
                 .build();
@@ -105,6 +113,10 @@ public class PaymentServiceTest {
         when(externalApiClient.getRandomNumber()).thenReturn(List.of(1));
         when(paymentMapper.toEntity(any(OrderCreatedEvent.class))).thenReturn(payment);
         when(paymentRepository.save(any(Payment.class))).thenReturn(payment);
+
+        PaymentCreatedEvent paymentCreatedEvent = new PaymentCreatedEvent(1L, PaymentStatus.FAILED);
+
+        when(eventMapper.toPaymentCreatedEvent(any(OrderCreatedEvent.class), any(PaymentStatus.class))).thenReturn(paymentCreatedEvent);
 
         OutboxPayments outboxEvent = OutboxPayments.builder()
                 .id("event")
