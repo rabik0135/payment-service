@@ -6,13 +6,13 @@ spring:
     name: payment-service
   data:
     mongodb:
-      uri: mongodb://payments:paymentsroot@localhost:27017/payments_db?authSource=admin&replicaSet=rs0
+      uri: mongodb://payments:paymentsroot@my-mongodb-headless:27017/payments_db?authSource=admin&replicaSet=rs0
       database: payments_db
   liquibase:
     enabled: true
     change-log: db/changelog/db.changelog-master.xml
   kafka:
-    bootstrap-servers: localhost:9094
+    bootstrap-servers: kafka:9092
     consumer:
       group-id: payment-service-group
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
@@ -35,6 +35,17 @@ spring:
           use:
             type:
               headers: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
 client:
   random-number-api:
     url: http://www.randomnumberapi.com
