@@ -1,0 +1,91 @@
+networks:
+  microservices-network:
+    external: true
+
+services:
+  payment-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: payment-service:latest
+    container_name: payment-service
+    ports:
+      - "8084:8084"
+    depends_on:
+      mongo:
+        condition: service_started
+      kafka:
+        condition: service_started
+    environment:
+      SPRING_DATA_MONGODB_URI: "mongodb://${MONGO_USER}:${MONGO_PASSWORD}@mongo:27017/payments_db?authSource=admin&replicaSet=rs0"
+      CLIENT_RANDOM-NUMBER-API_URL: "http://www.randomnumberapi.com"
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+      SPRING_DATA_MONGODB_USERNAME: ${MONGO_USER}
+      SPRING_DATA_MONGODB_PASSWORD: ${MONGO_PASSWORD}
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health
+      MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED: true
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://payment-service:8084/actuator/health" ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - microservices-network
+  mongo:
+    image: mongo:8.0
+    container_name: mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+      - ./mongo-init/mongo.key:/etc/mongo/mongo.key:ro
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+    command: [ "--replSet", "rs0", "--bind_ip_all", "--port", "27017", "--auth", "--keyFile", "/etc/mongo/mongo.key" ]
+    networks:
+      - microservices-network
+
+  mongo-init-replica:
+    image: mongo:8.0
+    depends_on:
+      - mongo
+    environment:
+      MONGO_USER: ${MONGO_USER}
+      MONGO_PASSWORD: ${MONGO_PASSWORD}
+    volumes:
+      - ./mongo-init/mongo-init.sh:/scripts/mongo-init.sh:ro
+      - ./mongo-init/mongo.key:/etc/mongo/mongo.key:ro
+    entrypoint: [ "/bin/bash", "/scripts/mongo-init.sh" ]
+    networks:
+      - microservices-network
+
+  kafka:
+    image: apache/kafka:3.9.1
+    container_name: kafka
+    ports:
+      - "9094:9094"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CLUSTER_ID: x1Rtrbh7RBCU2LoAzkKsdA
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+
+      KAFKA_LISTENERS: INTERNAL://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093,EXTERNAL://0.0.0.0:9094
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:9092,EXTERNAL://localhost:9094
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,INTERNAL:PLAINTEXT, EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_NUM_PARTITIONS: 3
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: true
+    networks:
+      microservices-network:
+volumes:
+  mongo_data:

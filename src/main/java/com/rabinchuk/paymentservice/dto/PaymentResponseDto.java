@@ -1,0 +1,23 @@
+package com.rabinchuk.paymentservice.dto;
+
+import com.rabinchuk.paymentservice.model.PaymentStatus;
+import lombok.Builder;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+@Builder
+public record PaymentResponseDto(
+        String id,
+
+        Long orderId,
+
+        Long userId,
+
+        PaymentStatus status,
+
+        LocalDateTime timestamp,
+
+        BigDecimal paymentAmount
+) {
+}

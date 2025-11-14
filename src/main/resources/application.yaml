@@ -1,0 +1,51 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: payment-service
+  data:
+    mongodb:
+      uri: mongodb://payments:paymentsroot@my-mongodb-headless:27017/payments_db?authSource=admin&replicaSet=rs0
+      database: payments_db
+  liquibase:
+    enabled: true
+    change-log: db/changelog/db.changelog-master.xml
+  kafka:
+    bootstrap-servers: kafka:9092
+    consumer:
+      group-id: payment-service-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring:
+          json:
+            trusted:
+              packages: "com.rabinchuk.paymentservice.dto,com.rabinchuk.orderservice.dto"
+            use:
+              type:
+                headers: true
+            type:
+              mapping: "com.rabinchuk.orderservice.dto.OrderCreatedEvent:com.rabinchuk.paymentservice.dto.OrderCreatedEvent"
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring:
+          use:
+            type:
+              headers: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+client:
+  random-number-api:
+    url: http://www.randomnumberapi.com
