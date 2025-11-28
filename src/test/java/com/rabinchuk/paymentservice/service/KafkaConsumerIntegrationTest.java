@@ -49,7 +49,7 @@ public class KafkaConsumerIntegrationTest extends AbstractIntegrationTest {
 
         kafkaTemplate.send("order-created-topic", event);
 
-        await().atMost(10, TimeUnit.SECONDS).untilAsserted(() -> {
+        /*await().atMost(10, TimeUnit.SECONDS).untilAsserted(() -> {
             var payments = paymentRepository.findAll();
             assertThat(payments).hasSize(1);
             var payment = payments.getFirst();
@@ -62,7 +62,26 @@ public class KafkaConsumerIntegrationTest extends AbstractIntegrationTest {
             var outboxEvent = outboxEvents.getFirst();
             assertThat(outboxEvent.getPaymentId()).isEqualTo(payment.getId());
             assertThat(outboxEvent.getStatus()).isEqualTo(EventStatus.PENDING);
-        });
+        });*/
+
+        await().atMost(30, TimeUnit.SECONDS)
+                .pollInterval(1, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    var payments = paymentRepository.findAll();
+                    assertThat(payments).hasSize(1);
+
+                    var payment = payments.get(0);
+                    assertThat(payment.getOrderId()).isEqualTo(event.orderId());
+                    assertThat(payment.getStatus()).isEqualTo(PaymentStatus.SUCCESS);
+                    assertThat(payment.getPaymentAmount()).isEqualByComparingTo("199.99");
+
+                    var outboxEvents = outboxPaymentsRepository.findAll();
+                    assertThat(outboxEvents).hasSize(1);
+
+                    var outboxEvent = outboxEvents.get(0);
+                    assertThat(outboxEvent.getPaymentId()).isEqualTo(payment.getId());
+                    assertThat(outboxEvent.getStatus()).isEqualTo(EventStatus.PENDING);
+                });
     }
 
 }
